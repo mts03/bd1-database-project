@@ -41,4 +41,13 @@ class DatabaseManager:
 
         return dict(query_result)
     
+    def execute_query(self, query):
+        try:
+            self.cursor.execute(query)
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Erro ao executar query: {e}")
+            raise
+
     
