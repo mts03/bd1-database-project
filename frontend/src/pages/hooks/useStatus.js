@@ -12,9 +12,9 @@ export default function useConsultarStatus() {
 
     let url = "";
     if (statusType === "mesa") {
-      url = `http://127.0.0.1:5000/pedido/status/mesa?n_mesa=${mesaNumber}`;
+      url = `http://127.0.0.1:8000/pedido/status/mesa?n_mesa=${mesaNumber}`;
     } else {
-      url = `http://127.0.0.1:5000/pedido/status/delivery?id_entrega=${deliveryId}`;
+      url = `http://127.0.0.1:8000/pedido/status/delivery?id_entrega=${deliveryId}`;
     }
 
     try {

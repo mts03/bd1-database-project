@@ -8,7 +8,7 @@ export default function useEmitirPedido() {
     if (!id) return alert("Digite o ID do pedido!");
 
     try {
-      const response = await fetch(`http://127.0.0.1:5000/pedido/emitir/${id}`);
+      const response = await fetch(`http://127.0.0.1:8000/pedido/emitir/${id}`);
       const result = await response.json();
       if (response.ok) {
         setPedidoEmitido(result);
