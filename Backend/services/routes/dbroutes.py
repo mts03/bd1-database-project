@@ -95,3 +95,63 @@ def get_pedidos_restaurante():
     return jsonify(pedidos)
 
 # Rota para mudar o status de um pedido 
+@app.route('/pedido/status/mesa', methods=['GET'])
+def status_pedido_mesa():
+    n_mesa = request.args.get("n_mesa", type=int)
+    if n_mesa is None:
+        return jsonify({"error": "Número da mesa é obrigatório"}), 400
+
+    query = f"""
+        SELECT p.id_pedido, p.data_hora, p.status
+        FROM pedido p
+        WHERE p.n_mesa = {n_mesa}
+        ORDER BY p.data_hora DESC
+        LIMIT 3;
+    """
+    pedidos = db_manager.execute_select_all(query)
+    return jsonify(pedidos)
+
+# nota fiscal
+
+@app.route('/pedido/emitir/<int:id_pedido>', methods=['GET'])
+def emitir_pedido(id_pedido):
+    # Buscar pedido
+    pedido = db_manager.execute_select_one(f"""
+        SELECT p.id_pedido, p.data_hora, p.tipo, p.status, p.valor_total, c.nome AS cliente
+        FROM pedido p
+        JOIN cliente c ON p.id_cliente = c.id_cliente
+        WHERE p.id_pedido = {id_pedido};
+    """)
+
+    if not pedido:
+        return jsonify({"error": "Pedido não encontrado"}), 404
+
+    # Buscar itens do pedido
+    itens = db_manager.execute_select_all(f"""
+        SELECT ic.nome, pi.quantidade, ic.preco
+        FROM pedido_item pi
+        JOIN item_cardapio ic ON pi.id_item = ic.id_item
+        WHERE pi.id_pedido = {id_pedido};
+    """)
+
+    # Gerar comanda (simples JSON)
+    comanda = {
+        "id_pedido": pedido["id_pedido"],
+        "cliente": pedido["cliente"],
+        "itens": itens,
+        "tipo": pedido["tipo"]
+    }
+
+    # Gerar nota fiscal (simples JSON, futuramente PDF)
+    nota_fiscal = {
+        "id_pedido": pedido["id_pedido"],
+        "cliente": pedido["cliente"],
+        "valor_total": pedido["valor_total"],
+        "itens": itens,
+        "data_hora": str(pedido["data_hora"])
+    }
+
+    return jsonify({
+        "comanda": comanda,
+        "nota_fiscal": nota_fiscal
+    })

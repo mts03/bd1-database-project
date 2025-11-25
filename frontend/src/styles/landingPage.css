@@ -1,0 +1,193 @@
+/* ===== Layout Principal ===== */
+.layout {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  font-family: Arial, sans-serif;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: 250px;
+  background-color: #b91c1c;
+  color: #fff;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sidebar-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.sidebar-button {
+  padding: 12px;
+  border: none;
+  background-color: #dc2626;
+  color: #fff;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.sidebar-button:hover {
+  background-color: #ef4444;
+}
+
+.sidebar-button.active {
+  background-color: #fbbf24;
+  color: #000;
+  font-weight: bold;
+}
+
+/* ===== Conteúdo ===== */
+.content-area {
+  flex: 1;
+  padding: 40px;
+  overflow-y: auto;
+}
+
+/* ===== Hero ===== */
+.hero {
+  text-align: center;
+  background-color: #f87171;
+  padding: 60px;
+  border-radius: 10px;
+  color: white;
+}
+
+.hero-title {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.hero-text {
+  max-width: 600px;
+  margin: 20px auto;
+  font-size: 18px;
+}
+
+.cta-button {
+  padding: 12px 25px;
+  background-color: #fbbf24;
+  color: #000;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* ===== Texto Geral ===== */
+.text-block {
+  background-color: #fee2e2;
+  color: #7f1d1d;
+  padding: 40px;
+  border-radius: 10px;
+}
+
+.section-title {
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+
+.section-text {
+  max-width: 700px;
+  font-size: 18px;
+  margin: 0 auto;
+}
+
+/* ===== Galeria ===== */
+.gallery {
+  padding: 40px;
+  background-color: #fef3c7;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.images-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.gallery-image {
+  width: 300px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* ===== Formulário de Pedidos ===== */
+.pedido-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 500px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+
+.form-label {
+  font-weight: bold;
+  color: #7f1d1d;
+}
+
+.form-input {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #b91c1c;
+  font-size: 16px;
+}
+
+.submit-button {
+  margin-top: 10px;
+  padding: 12px;
+  background-color: #b91c1c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.submit-button:hover {
+  background-color: #dc2626;
+}
+
+/* ===== Itens adicionados ===== */
+.add-item-button {
+  padding: 10px;
+  background-color: #fbbf24;
+  border: none;
+  color: black;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-item-button:hover {
+  background-color: #facc15;
+}
+
+.items-list {
+  background: #fff7f7;
+  border: 1px solid #b91c1c;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.item-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dashed #b91c1c;
+}
+
+.item-line:last-child {
+  border-bottom: none;
+}
