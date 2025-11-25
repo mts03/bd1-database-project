@@ -2,6 +2,10 @@ from services.database.manager import DatabaseManager
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente do arquivo .env
+load_dotenv()
 
 app = Flask(__name__)
 db_manager = DatabaseManager()
