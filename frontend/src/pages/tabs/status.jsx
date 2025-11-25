@@ -1,5 +1,6 @@
 import React from 'react';
 import useConsultarStatus from '../hooks/useStatus';
+//import '../styles/landingPage.css';
 
 export default function ConsultarStatus() {
   const {

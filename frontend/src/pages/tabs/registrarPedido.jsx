@@ -1,5 +1,6 @@
 import React from 'react';
 import useRegistrarPedido from '../hooks/UseregistrarPedido';
+//import '../styles/landingPage.css';
 
 export default function RegistrarPedido() {
   const {
@@ -35,7 +36,7 @@ export default function RegistrarPedido() {
         <input type="number" min="1" className="form-input" value={quantity} onChange={e => setQuantity(Number(e.target.value))} />
 
         {/* Adicionar Item */}
-        <button type="button" onClick={() => {
+        <button type="button" className="submit-button" onClick={() => {
           if (!selectedItem) return alert("Selecione um item!");
           if (quantity < 1) return alert("Quantidade inválida!");
           setOrderItems([...orderItems, { item: selectedItem, quantity }]);
@@ -68,12 +69,17 @@ export default function RegistrarPedido() {
         )}
 
         {/* Cupom */}
-        <input type="text" placeholder="Cupom de Desconto" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
+        <label className="form-label">Cupom</label>
+        <input type="text"  className="form-input" placeholder="Cupom de Desconto, se houver" value={couponCode} onChange={e => setCouponCode(e.target.value)} />
 
         {/* Funcionário */}
-        <input type="text" placeholder="ID Funcionário" value={employeeId} onChange={e => setEmployeeId(e.target.value)} />
+        <label className="form-label">Funcionário Responsável</label>
+        <input type="text" className="form-input"  placeholder="ID Funcionário" value={employeeId} onChange={e => setEmployeeId(e.target.value)} />
 
-        <button type="button" onClick={handleRegisterPedido}>Registrar Pedido</button>
+        <button type="button" className="registrar-button" onClick={handleRegisterPedido}>
+            Registrar Pedido
+        </button>
+
       </form>
     </section>
   );

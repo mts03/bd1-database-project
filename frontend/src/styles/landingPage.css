@@ -144,6 +144,19 @@
   font-size: 16px;
 }
 
+.registrar-button {
+  background-color: #fbbf24;
+  color: black;
+  border: none;
+  border-radius: 5px;
+  padding: 12px;
+  cursor: pointer;
+}
+
+.registrar-button:hover {
+  background-color: #facc15;
+}
+
 .submit-button {
   margin-top: 10px;
   padding: 12px;

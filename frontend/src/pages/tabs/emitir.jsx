@@ -1,5 +1,7 @@
 import React from 'react';
 import useEmitirPedido from '../hooks/useEmitir';
+//import '../styles/landingPage.css';
+
 
 export default function EmitirPedido() {
   const { pedidoId, setPedidoId, pedidoEmitido, emitirPedido } = useEmitirPedido();
