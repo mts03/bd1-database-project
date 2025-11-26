@@ -1,57 +1,72 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export default function useRelatorios() {
+  // Estados para Relatório Específico
   const [dadosVendas, setDadosVendas] = useState([]);
   const [itensPopulares, setItensPopulares] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // Estados para Relatório Geral (Admin)
+  const [vendasPorUnidade, setVendasPorUnidade] = useState([]);
+  const [itensGerais, setItensGerais] = useState([]);
+
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const idRestaurante = 1;
-
-  useEffect(() => {
-    carregarRelatorios();
-  }, []);
-
-  const carregarRelatorios = async () => {
+  // Função para carregar dados de UM restaurante
+  const carregarRelatoriosEspecificos = async (idRestaurante) => {
     setLoading(true);
     setError(null);
-
     try {
-      // Buscar Vendas
-      const resVendas = await fetch(
-        `http://127.0.0.1:8000/relatorio/vendas?id_restaurante=${idRestaurante}`
-      );
-      const jsonVendas = await resVendas.json();
-      if (resVendas.ok && Array.isArray(jsonVendas)) {
-        setDadosVendas(
-          jsonVendas.map(item => ({
-            ...item,
-            total_vendas: Number(item.total_vendas) || 0, // garante número
-            qtd_pedidos: Number(item.qtd_pedidos) || 0
-          }))
-        );
-      }
+      const [resVendas, resItens] = await Promise.all([
+        fetch(`http://127.0.0.1:8000/relatorio/vendas?id_restaurante=${idRestaurante}`),
+        fetch(`http://127.0.0.1:8000/relatorio/itens-populares?id_restaurante=${idRestaurante}`)
+      ]);
 
-      // Buscar Itens Populares
-      const resItens = await fetch(
-        `http://127.0.0.1:8000/relatorio/itens-populares?id_restaurante=${idRestaurante}`
-      );
-      const jsonItens = await resItens.json();
-      if (resItens.ok && Array.isArray(jsonItens)) {
-        setItensPopulares(
-          jsonItens.map(item => ({
-            ...item,
-            total_vendido: Number(item.total_vendido) || 0 // garante número
-          }))
-        );
-      }
+      if (!resVendas.ok || !resItens.ok) throw new Error('Erro ao buscar dados específicos');
+
+      setDadosVendas(await resVendas.json());
+      setItensPopulares(await resItens.json());
     } catch (err) {
-      console.error("Erro ao carregar relatórios:", err);
-      setError(err);
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  return { dadosVendas, itensPopulares, loading, error };
+  // Função para carregar dados GERAIS (Todas as unidades)
+  const carregarRelatoriosGerais = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [resUnidades, resItens] = await Promise.all([
+        fetch(`http://127.0.0.1:8000/relatorio/geral/vendas-por-unidade`),
+        fetch(`http://127.0.0.1:8000/relatorio/geral/itens-populares`)
+      ]);
+
+      if (!resUnidades.ok || !resItens.ok) throw new Error('Erro ao buscar dados gerais');
+
+      setVendasPorUnidade(await resUnidades.json());
+      setItensGerais(await resItens.json());
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { 
+    // Dados Específicos
+    dadosVendas, 
+    itensPopulares, 
+    carregarRelatoriosEspecificos,
+    
+    // Dados Gerais
+    vendasPorUnidade,
+    itensGerais,
+    carregarRelatoriosGerais,
+
+    // Estado Comum
+    loading, 
+    error 
+  };
 }
