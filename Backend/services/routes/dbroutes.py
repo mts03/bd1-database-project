@@ -334,6 +334,7 @@ def relatorio_vendas():
     if id_restaurante is None:
         return jsonify({"error": "id_restaurante é obrigatório"}), 400
 
+    # Query corrigida e otimizada
     query = f"""
         SELECT TO_CHAR(data_hora, 'DD/MM') as data,
                SUM(valor_total) as total_vendas,
@@ -344,8 +345,21 @@ def relatorio_vendas():
         ORDER BY DATE(data_hora) ASC
         LIMIT 7;
     """
-    resultado = db_manager.execute_select_all(query)
-    return jsonify(resultado)
+    try:
+        resultado = db_manager.execute_select_all(query)
+        
+        # CORREÇÃO DE ERRO: Converter Decimal para float para o JSON funcionar
+        dados_formatados = []
+        for linha in resultado:
+            nova_linha = dict(linha)
+            if isinstance(nova_linha.get('total_vendas'), (Decimal, int, str)):
+                 nova_linha['total_vendas'] = float(nova_linha['total_vendas']) if nova_linha['total_vendas'] else 0.0
+            dados_formatados.append(nova_linha)
+            
+        return jsonify(dados_formatados)
+    except Exception as e:
+        print(f"Erro relatório vendas: {e}")
+        return jsonify({"error": "Erro ao gerar relatório"}), 500
 
 
 @app.route('/relatorio/itens-populares', methods=['GET'])
@@ -364,8 +378,80 @@ def relatorio_itens():
         ORDER BY total_vendido DESC
         LIMIT 5;
     """
-    resultado = db_manager.execute_select_all(query)
-    return jsonify(resultado)
+    try:
+        resultado = db_manager.execute_select_all(query)
+        
+        # Conversão de segurança
+        dados_formatados = []
+        for linha in resultado:
+            nova_linha = dict(linha)
+            if nova_linha.get('total_vendido'):
+                nova_linha['total_vendido'] = int(nova_linha['total_vendido'])
+            dados_formatados.append(nova_linha)
+
+        return jsonify(dados_formatados)
+    except Exception as e:
+        print(f"Erro itens populares: {e}")
+        return jsonify({"error": str(e)}), 500
+
+# --- ROTAS DE RELATÓRIO GERAL (ADMIN) ---
+
+@app.route('/relatorio/geral/vendas-por-unidade', methods=['GET'])
+def relatorio_geral_unidades():
+    """
+    Compara o número total de pedidos por restaurante
+    """
+    query = """
+        SELECT r.nome, COUNT(p.id_pedido) as total_pedidos, SUM(p.valor_total) as total_faturamento
+        FROM pedido p
+        JOIN restaurante r ON p.id_restaurante = r.id_restaurante
+        GROUP BY r.nome
+        ORDER BY total_pedidos DESC;
+    """
+    try:
+        resultado = db_manager.execute_select_all(query)
+        
+        # Converter Decimals
+        dados_formatados = []
+        for linha in resultado:
+            nova_linha = dict(linha)
+            if nova_linha.get('total_faturamento'):
+                nova_linha['total_faturamento'] = float(nova_linha['total_faturamento'])
+            dados_formatados.append(nova_linha)
+            
+        return jsonify(dados_formatados)
+    except Exception as e:
+        print(f"Erro relatorio geral unidades: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/relatorio/geral/itens-populares', methods=['GET'])
+def relatorio_geral_itens():
+    """
+    Itens mais populares somando TODAS as unidades
+    """
+    query = """
+        SELECT ic.nome, SUM(pi.quantidade) as total_vendido
+        FROM pedido_item pi
+        JOIN item_cardapio ic ON pi.id_item = ic.id_item
+        GROUP BY ic.nome
+        ORDER BY total_vendido DESC
+        LIMIT 5;
+    """
+    try:
+        resultado = db_manager.execute_select_all(query)
+        
+        # Conversão simples
+        dados_formatados = []
+        for linha in resultado:
+            nova_linha = dict(linha)
+            if nova_linha.get('total_vendido'):
+                nova_linha['total_vendido'] = int(nova_linha['total_vendido'])
+            dados_formatados.append(nova_linha)
+
+        return jsonify(dados_formatados)
+    except Exception as e:
+        print(f"Erro relatorio geral itens: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/cardapio', methods=['GET'])
@@ -414,7 +500,107 @@ def get_ingredientes():
     ingredientes = db_manager.execute_select_all(query)
     return jsonify(ingredientes)
 
+@app.route('/gerar-nota/<int:id_pedido>', methods=['GET'])
+def gerar_nota_pdf(id_pedido):
+    print(f"=== Iniciando PDF para Pedido: {id_pedido} ===") 
+    
+    try:
+        try:
+            db_manager.execute_query("ROLLBACK;")
+        except Exception as e:
+            print(f"Aviso de rollback: {e}")
 
+        query_pedido = f"""
+            SELECT p.id_pedido, p.data_hora, p.valor_total, c.nome AS cliente, 
+                   p.taxa_entrega
+            FROM pedido p
+            JOIN cliente c ON p.id_cliente = c.id_cliente
+            WHERE p.id_pedido = {id_pedido};
+        """
+        print(f"Executando query: {query_pedido}")
+        
+        pedido = db_manager.execute_select_one(query_pedido)
+
+        if not pedido:
+            print("ERRO: Query retornou vazio (None).")
+            return jsonify({"error": "Pedido não encontrado"}), 404
+
+        print(f"Pedido encontrado: {pedido['cliente']}")
+
+        query_itens = f"""
+            SELECT ic.nome, pi.quantidade, ic.preco
+            FROM pedido_item pi
+            JOIN item_cardapio ic ON pi.id_item = ic.id_item
+            WHERE pi.id_pedido = {id_pedido};
+        """
+        itens = db_manager.execute_select_all(query_itens)
+
+        buffer = io.BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+        
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(50, 800, "PIZZARIA DO SISTEMA")
+        p.setFont("Helvetica", 10)
+        p.drawString(50, 785, "CNPJ: 00.000.000/0001-00")
+        
+        p.line(50, 760, 550, 760)
+
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(50, 740, f"NOTA FISCAL - PEDIDO #{pedido['id_pedido']}")
+        p.setFont("Helvetica", 11)
+        p.drawString(50, 720, f"Cliente: {pedido['cliente']}")
+        p.drawString(350, 720, f"Data: {pedido['data_hora']}")
+
+        p.line(50, 690, 550, 690)
+
+        y = 670
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(50, y, "ITEM")
+        p.drawString(350, y, "QTD")
+        p.drawString(480, y, "TOTAL")
+        y -= 20
+
+        p.setFont("Helvetica", 10)
+        if itens: 
+            for item in itens:
+                nome = item['nome']
+                qtd = item['quantidade'] if item['quantidade'] else 0
+                preco = float(item['preco']) if item['preco'] else 0.0
+                total_item = qtd * preco
+                
+                p.drawString(50, y, f"{nome}")
+                p.drawString(350, y, f"{qtd}")
+                p.drawString(480, y, f"R$ {total_item:.2f}")
+                y -= 15
+        
+        y -= 20
+        p.line(50, y, 550, y)
+        y -= 20
+
+        val_total = float(pedido['valor_total']) if pedido['valor_total'] else 0.0
+        val_taxa = float(pedido['taxa_entrega']) if pedido['taxa_entrega'] else 0.0
+
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(350, y, f"Taxa Entrega: R$ {val_taxa:.2f}")
+        y -= 20
+        p.drawString(350, y, f"TOTAL: R$ {val_total:.2f}")
+
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=f"nota_fiscal_{id_pedido}.pdf",
+            mimetype='application/pdf'
+        )
+
+    except Exception as e:
+        print(f"ERRO CRÍTICO ao gerar PDF: {e}")
+        import traceback
+        traceback.print_exc() 
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
